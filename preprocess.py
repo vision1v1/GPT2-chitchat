@@ -18,12 +18,10 @@ def create_logger(log_path):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
     # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(
-        filename=log_path)
+    file_handler = logging.FileHandler(filename=log_path)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.INFO)
     logger.addHandler(file_handler)
@@ -43,8 +41,7 @@ def preprocess():
     """
     # 设置参数
     parser = argparse.ArgumentParser()
-    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False,
-                        help='词表路径')
+    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='词表路径')
     parser.add_argument('--log_path', default='data/preprocess.log', type=str, required=False, help='训练日志存放位置')
     parser.add_argument('--train_path', default='data/train.txt', type=str, required=False, help='训练日志存放位置')
     parser.add_argument('--save_path', default='data/train.pkl', type=str, required=False, help='tokenize的训练数据集')
@@ -98,4 +95,3 @@ def preprocess():
 
 if __name__ == '__main__':
     preprocess()
-
