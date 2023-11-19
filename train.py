@@ -30,10 +30,8 @@ def set_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='3', type=str, required=False, help='设置使用哪些显卡')
     parser.add_argument('--no_cuda', action='store_true', help='不使用GPU进行训练')
-    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False,
-                        help='词表路径')
-    parser.add_argument('--model_config', default='config/config.json', type=str, required=False,
-                        help='设置模型参数')
+    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='词表路径')
+    parser.add_argument('--model_config', default='config/config.json', type=str, required=False, help='设置模型参数')
     parser.add_argument('--train_path', default='data/train.pkl', type=str, required=False, help='训练集路径')
     parser.add_argument('--max_len', default=150, type=int, required=False, help='训练时，输入数据的最大长度')
 
@@ -49,16 +47,15 @@ def set_args():
     parser.add_argument('--log_step', default=1, type=int, required=False, help='多少步汇报一次loss')
     parser.add_argument('--gradient_accumulation_steps', default=4, type=int, required=False, help='梯度积累')
     parser.add_argument('--max_grad_norm', default=2.0, type=float, required=False)
-    parser.add_argument('--save_model_path', default='model', type=str, required=False,
-                        help='模型输出路径')
-    parser.add_argument('--pretrained_model', default='', type=str, required=False,
-                        help='预训练的模型的路径')
+    parser.add_argument('--save_model_path', default='model', type=str, required=False, help='模型输出路径')
+    parser.add_argument('--pretrained_model', default='', type=str, required=False, help='预训练的模型的路径')
     # parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
     parser.add_argument('--num_workers', type=int, default=0, help="dataloader加载数据时使用的线程数量")
     parser.add_argument('--patience', type=int, default=0, help="用于early stopping,设为0时,不进行early stopping.early stop得到的模型的生成效果不一定会更好。")
     parser.add_argument('--warmup_steps', type=int, default=4000, help='warm up步数')
     # parser.add_argument('--label_smoothing', default=True, action='store_true', help='是否进行标签平滑')
-    parser.add_argument('--val_num', type=int, default=8000, help='验证集大小')
+    # parser.add_argument('--val_num', type=int, default=8000, help='验证集大小')
+    parser.add_argument('--val_num', type=int, default=1, help='验证集大小')  # 调试用的
     args = parser.parse_args()
     return args
 
@@ -70,12 +67,10 @@ def create_logger(args):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
     # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(
-        filename=args.log_path)
+    file_handler = logging.FileHandler(filename=args.log_path)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.INFO)
     logger.addHandler(file_handler)
@@ -139,8 +134,7 @@ def load_dataset(logger, args):
     return train_dataset, val_dataset
 
 
-def train_epoch(model, train_dataloader, optimizer, scheduler, logger,
-                epoch, args):
+def train_epoch(model, train_dataloader, optimizer, scheduler, logger, epoch, args):
     model.train()
     device = args.device
     # pad_id = args.pad_id
@@ -189,9 +183,11 @@ def train_epoch(model, train_dataloader, optimizer, scheduler, logger,
                 optimizer.zero_grad()
 
             if (batch_idx + 1) % args.log_step == 0:
-                logger.info(
-                    "batch {} of epoch {}, loss {}, batch_acc {}, lr {}".format(
-                        batch_idx + 1, epoch + 1, loss.item() * args.gradient_accumulation_steps, batch_acc, scheduler.get_lr()))
+                logger.info("batch {} of epoch {}, loss {}, batch_acc {}, lr {}".format(batch_idx + 1,
+                                                                                        epoch + 1,
+                                                                                        loss.item() * args.gradient_accumulation_steps,
+                                                                                        batch_acc,
+                                                                                        scheduler.get_lr()))
 
             del input_ids, outputs
 
@@ -207,8 +203,7 @@ def train_epoch(model, train_dataloader, optimizer, scheduler, logger,
     # 记录当前epoch的平均loss与accuracy
     epoch_mean_loss = total_loss / len(train_dataloader)
     epoch_mean_acc = epoch_correct_num / epoch_total_num
-    logger.info(
-        "epoch {}: loss {}, predict_acc {}".format(epoch + 1, epoch_mean_loss, epoch_mean_acc))
+    logger.info("epoch {}: loss {}, predict_acc {}".format(epoch + 1, epoch_mean_loss, epoch_mean_acc))
 
     # save model
     logger.info('saving model for epoch {}'.format(epoch + 1))
@@ -249,8 +244,7 @@ def validate_epoch(model, validate_dataloader, logger, epoch, args):
 
             # 记录当前epoch的平均loss
             epoch_mean_loss = total_loss / len(validate_dataloader)
-            logger.info(
-                "validate epoch {}: loss {}".format(epoch+1, epoch_mean_loss))
+            logger.info("validate epoch {}: loss {}".format(epoch+1, epoch_mean_loss))
             epoch_finish_time = datetime.now()
             logger.info('time for validating one epoch: {}'.format(epoch_finish_time - epoch_start_time))
             return epoch_mean_loss
@@ -265,19 +259,30 @@ def validate_epoch(model, validate_dataloader, logger, epoch, args):
 
 
 def train(model, logger, train_dataset, validate_dataset, args):
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, collate_fn=collate_fn,
-        drop_last=True
-    )
-    validate_dataloader = DataLoader(validate_dataset, batch_size=args.batch_size, shuffle=True,
-                                     num_workers=args.num_workers, collate_fn=collate_fn, drop_last=True)
+    train_dataloader = DataLoader(train_dataset,
+                                  batch_size=args.batch_size,
+                                  shuffle=True,
+                                  num_workers=args.num_workers,
+                                  collate_fn=collate_fn,
+                                  #   drop_last=True,
+                                  drop_last=False)  # debug
+
+    validate_dataloader = DataLoader(validate_dataset,
+                                     batch_size=args.batch_size,
+                                     shuffle=True,
+                                     num_workers=args.num_workers,
+                                     collate_fn=collate_fn,
+                                     #   drop_last=True,
+                                     drop_last=False)  # debug
+
     early_stopping = EarlyStopping(args.patience, verbose=True, save_path=args.save_model_path)
+    # 多次反向传播，即计算梯度总次数。
     t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
     optimizer = transformers.AdamW(model.parameters(), lr=args.lr, eps=args.eps)
     # scheduler = transformers.WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
-    scheduler = transformers.get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total
-    )
+    scheduler = transformers.get_linear_schedule_with_warmup(optimizer,
+                                                             num_warmup_steps=args.warmup_steps,
+                                                             num_training_steps=t_total)
 
     logger.info('starting training')
 
@@ -288,16 +293,21 @@ def train(model, logger, train_dataset, validate_dataset, args):
     # 开始训练
     for epoch in range(args.epochs):
         # ========== train ========== #
-        train_loss = train_epoch(
-            model=model, train_dataloader=train_dataloader,
-            optimizer=optimizer, scheduler=scheduler,
-            logger=logger, epoch=epoch, args=args)
+        train_loss = train_epoch(model=model,
+                                 train_dataloader=train_dataloader,
+                                 optimizer=optimizer,
+                                 scheduler=scheduler,
+                                 logger=logger,
+                                 epoch=epoch,
+                                 args=args)
         train_losses.append(train_loss)
 
         # ========== validate ========== #
-        validate_loss = validate_epoch(
-            model=model, validate_dataloader=validate_dataloader,
-            logger=logger, epoch=epoch, args=args)
+        validate_loss = validate_epoch(model=model,
+                                       validate_dataloader=validate_dataloader,
+                                       logger=logger,
+                                       epoch=epoch,
+                                       args=args)
         validate_losses.append(validate_loss)
 
         # 保存当前困惑度最低的模型，困惑度低，模型的生成效果不一定会越好
@@ -367,9 +377,9 @@ def main():
     args.cuda = not args.no_cuda
 
     if args.batch_size < 2048 and args.warmup_steps <= 4000:
-        print('[Warning] The warmup steps may be not enough.\n' \
-              '(sz_b, warmup) = (2048, 4000) is the official setting.\n' \
-              'Using smaller batch w/o longer warmup may cause ' \
+        print('[Warning] The warmup steps may be not enough.\n'
+              '(sz_b, warmup) = (2048, 4000) is the official setting.\n'
+              'Using smaller batch w/o longer warmup may cause '
               'the warmup stage ends with only little data trained.')
 
     # 创建日志对象
