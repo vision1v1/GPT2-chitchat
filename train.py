@@ -24,6 +24,7 @@ import pandas as pd
 import torch.nn.utils.rnn as rnn_utils
 import numpy as np
 from dataset import MyDataset
+from util import create_logger
 
 
 def set_args():
@@ -59,29 +60,6 @@ def set_args():
     args = parser.parse_args()
     return args
 
-
-def create_logger(args):
-    """
-    将日志输出到日志文件和控制台
-    """
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-    # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(filename=args.log_path)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-
-    # 创建一个handler，用于将日志输出到控制台
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(formatter)
-    logger.addHandler(console)
-
-    return logger
 
 
 def collate_fn(batch):

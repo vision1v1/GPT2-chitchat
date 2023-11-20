@@ -14,8 +14,7 @@ def generate_subset():
     parser = argparse.ArgumentParser()
     parser.add_argument('--raw_data_path', default='data/train.txt', type=str, required=False, help='原始训练语料')
     parser.add_argument('--subset_size', default=1000000, type=int, required=False, help='要获取的对话数据子集的规模')
-    parser.add_argument('--subset_data_path', default='data', type=str, required=False,
-                        help='数据子集文件路径,指定文件的父目录')
+    parser.add_argument('--subset_data_path', default='data', type=str, required=False, help='数据子集文件路径,指定文件的父目录')
     args = parser.parse_args()
     with open(args.raw_data_path, "r", encoding="utf8") as f:
         data = f.read()

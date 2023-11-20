@@ -5,12 +5,12 @@ import json
 import random
 import numpy as np
 import argparse
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from tqdm import tqdm
 from torch.nn import DataParallel
 import logging
-from transformers.modeling_gpt2 import GPT2Config, GPT2LMHeadModel
+from transformers import GPT2Config, GPT2LMHeadModel
 from transformers import BertTokenizer
 from os.path import join, exists
 from itertools import zip_longest, chain
@@ -20,6 +20,7 @@ from torch.nn import CrossEntropyLoss
 from sklearn.model_selection import train_test_split
 import torch.nn.functional as F
 import copy
+from util import create_logger
 
 PAD = '[PAD]'
 pad_id = 0
@@ -48,30 +49,6 @@ def set_interact_args():
     parser.add_argument('--batch_size', type=int, default=5, help='批量生成response，然后经过MMI模型进行筛选')
     parser.add_argument('--debug', action='store_true', help='指定该参数，可以查看生成的所有候选的reponse，及其loss')
     return parser.parse_args()
-
-
-def create_logger(args):
-    """
-    将日志输出到日志文件和控制台
-    """
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-    # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(filename=args.log_path)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-
-    # 创建一个handler，用于将日志输出到控制台
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(formatter)
-    logger.addHandler(console)
-
-    return logger
 
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
