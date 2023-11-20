@@ -21,6 +21,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn import CrossEntropyLoss
 from sklearn.model_selection import train_test_split
 import torch.nn.functional as F
+from util import create_logger
 
 PAD = '[PAD]'
 pad_id = 0
@@ -41,39 +42,12 @@ def set_args():
     parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--model_path', default='model/epoch40', type=str, required=False, help='对话模型路径')
     parser.add_argument('--save_samples_path', default="sample/", type=str, required=False, help="保存聊天记录的文件路径")
-    parser.add_argument('--repetition_penalty', default=1.0, type=float, required=False,
-                        help="重复惩罚参数，若生成的对话重复性较高，可适当提高该参数")
+    parser.add_argument('--repetition_penalty', default=1.0, type=float, required=False, help="重复惩罚参数，若生成的对话重复性较高，可适当提高该参数")
     # parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
     parser.add_argument('--max_len', type=int, default=25, help='每个utterance的最大长度,超过指定长度则进行截断')
     parser.add_argument('--max_history_len', type=int, default=3, help="dialogue history的最大长度")
     parser.add_argument('--no_cuda', action='store_true', help='不使用GPU进行预测')
     return parser.parse_args()
-
-
-def create_logger(args):
-    """
-    将日志输出到日志文件和控制台
-    """
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s')
-
-    # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(
-        filename=args.log_path)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-
-    # 创建一个handler，用于将日志输出到控制台
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(formatter)
-    logger.addHandler(console)
-
-    return logger
 
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
