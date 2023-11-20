@@ -1,12 +1,7 @@
-from tokenizers import BertWordPieceTokenizer
-from transformers import BertTokenizer
 from transformers import BertTokenizerFast
 import argparse
-import pandas as pd
 import pickle
-import jieba.analyse
 from tqdm import tqdm
-from transformers import GPT2TokenizerFast, GPT2LMHeadModel
 import logging
 import numpy as np
 
@@ -54,43 +49,45 @@ def preprocess():
     tokenizer = BertTokenizerFast(vocab_file=args.vocab_path, sep_token="[SEP]", pad_token="[PAD]", cls_token="[CLS]")
     sep_id = tokenizer.sep_token_id
     cls_id = tokenizer.cls_token_id
-    logger.info("preprocessing data,data path:{}, save path:{}".format(args.train_path, args.save_path))
+    logger.info(f"preprocessing data,data path:{args.train_path}, save path:{args.save_path}")
 
     # 读取训练数据集
     with open(args.train_path, 'rb') as f:
         data = f.read().decode("utf-8")
 
-    # 需要区分linux和windows环境下的换行符
+    # 需要区分linux和windows环境下的换行符。多次对话称为一轮。
     if "\r\n" in data:
-        train_data = data.split("\r\n\r\n")
+        train_data = data.split("\r\n\r\n")  # 处理成一轮一轮的。
     else:
         train_data = data.split("\n\n")
-    logger.info("there are {} dialogue in dataset".format(len(train_data)))
+    logger.info(f"there are {len(train_data)} dialogue in dataset")
 
     # 开始进行tokenize
     # 保存所有的对话数据,每条数据的格式为："[CLS]utterance1[SEP]utterance2[SEP]utterance3[SEP]"
     dialogue_len = []  # 记录所有对话tokenize之后的长度，用于统计中位数与均值
     dialogue_list = []
-    with open(args.save_path, "w", encoding="utf-8") as f:
-        for index, dialogue in enumerate(tqdm(train_data)):
-            if "\r\n" in data:
-                utterances = dialogue.split("\r\n")
-            else:
-                utterances = dialogue.split("\n")
+    for index, dialogue in enumerate(tqdm(train_data)):
+        if "\r\n" in data:
+            utterances = dialogue.split("\r\n")
+        else:
+            utterances = dialogue.split("\n")
 
-            input_ids = [cls_id]  # 每个dialogue以[CLS]开头
-            for utterance in utterances:
-                input_ids += tokenizer.encode(utterance, add_special_tokens=False)
-                input_ids.append(sep_id)  # 每个utterance之后添加[SEP]，表示utterance结束
-            dialogue_len.append(len(input_ids))
-            dialogue_list.append(input_ids)
-    len_mean = np.mean(dialogue_len)
-    len_median = np.median(dialogue_len)
-    len_max = np.max(dialogue_len)
+        input_ids = [cls_id]  # 每个dialogue以[CLS]开头
+        for utterance in utterances:
+            input_ids += tokenizer.encode(utterance, add_special_tokens=False)
+            input_ids.append(sep_id)  # 每个utterance之后添加[SEP]，表示utterance结束
+        dialogue_len.append(len(input_ids))
+        dialogue_list.append(input_ids)
+
+    len_mean = np.mean(dialogue_len)  # 统计长度均值
+    len_median = np.median(dialogue_len)  # 统计长度中位数
+    len_max = np.max(dialogue_len)  # 统计长度最大值
+    logger.info(f"mean of dialogue len:{len_mean:.3f},median of dialogue len:{len_median},max len:{len_max}")
+
+    # 保存处理好的结果
     with open(args.save_path, "wb") as f:
         pickle.dump(dialogue_list, f)
-    logger.info("finish preprocessing data,the result is stored in {}".format(args.save_path))
-    logger.info("mean of dialogue len:{},median of dialogue len:{},max len:{}".format(len_mean, len_median, len_max))
+    logger.info(f"finish preprocessing data,the result is stored in {args.save_path}")
 
 
 if __name__ == '__main__':
