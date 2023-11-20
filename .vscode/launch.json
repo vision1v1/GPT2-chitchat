@@ -17,12 +17,20 @@
             "justMyCode": false
         },
         {
-            "name": "train.py",
+            "name": "interact.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\\train.py",
+            "program": "${workspaceFolder}\\interact.py",
             "cwd": "${workspaceFolder}\\",
             "justMyCode": false
         },
+        {
+            "name": "interact_mmi.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\interact_mmi.py",
+            "cwd": "${workspaceFolder}\\",
+            "justMyCode": false
+        }
     ]
 }
