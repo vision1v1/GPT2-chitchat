@@ -276,7 +276,7 @@ def train(model, logger, train_dataset, validate_dataset, args):
                                      drop_last=False)  # debug
 
     early_stopping = EarlyStopping(args.patience, verbose=True, save_path=args.save_model_path)
-    # 多少次反向传播，即计算梯度总次数。
+    # 总的更新次数。
     t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
     optimizer = transformers.AdamW(model.parameters(), lr=args.lr, eps=args.eps)
     # scheduler = transformers.WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
