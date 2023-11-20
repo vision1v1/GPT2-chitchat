@@ -1,6 +1,14 @@
 {
     "configurations": [
         {
+            "name": "preprocess.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\preprocess.py",
+            "cwd": "${workspaceFolder}\\",
+            "justMyCode": false
+        },
+        {
             "name": "train.py",
             "type": "python",
             "request": "launch",
