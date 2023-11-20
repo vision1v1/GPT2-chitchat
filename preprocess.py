@@ -55,7 +55,7 @@ def preprocess():
     with open(args.train_path, 'rb') as f:
         data = f.read().decode("utf-8")
 
-    # 需要区分linux和windows环境下的换行符。多次对话称为一轮。
+    # 需要区分linux和windows环境下的换行符。多次对话称为一轮。一轮就是一段对话。训练数据中每段对话用一个空行隔开。
     if "\r\n" in data:
         train_data = data.split("\r\n\r\n")  # 处理成一轮一轮的。
     else:
