@@ -31,6 +31,14 @@
             "program": "${workspaceFolder}\\interact_mmi.py",
             "cwd": "${workspaceFolder}\\",
             "justMyCode": false
+        },
+        {
+            "name": "gpt2_model.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\test\\gpt2_model.py",
+            "cwd": "${workspaceFolder}\\test",
+            "justMyCode": false
         }
     ]
 }
