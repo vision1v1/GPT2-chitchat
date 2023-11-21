@@ -153,4 +153,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # (由于闲聊对话生成的内容长度不是很长，因此生成部分在CPU上跑速度也挺快的)
+    # python interact.py --no_cuda --model_path model_epoch40_50w --max_history_len 3
     main()
