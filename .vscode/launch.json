@@ -36,8 +36,8 @@
             "name": "gpt2_model.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\\test\\gpt2_model.py",
-            "cwd": "${workspaceFolder}\\test",
+            "program": "${workspaceFolder}\\diy\\gpt2_model.py",
+            "cwd": "${workspaceFolder}\\diy",
             "justMyCode": false
         }
     ]
