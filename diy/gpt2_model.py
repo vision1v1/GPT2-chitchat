@@ -1,29 +1,12 @@
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2Model
-from transformers.models.gpt2.modeling_gpt2 import GPT2Block, GPT2Attention, GPT2MLP
+from transformers.models.gpt2.modeling_gpt2 import GPT2Block, GPT2Attention, GPT2MLP, Conv1D
 from transformers.activations import NewGELUActivation
+from mock_data import mock_inputs, mock_hidden_states
 
 model_config_path = '../config/config.json'
 model_config = GPT2Config.from_json_file(model_config_path)
 print("config =", model_config, sep='\n', end='\n\n')
-
-
-def mock_inputs():
-    input_ids = torch.tensor([[101, 5401, 1957, 5276, 1658,  102, 2458, 1962, 2791, 5023,  872,  749,
-                               102, 2769, 3341, 1568,  102,    0,    0,    0,    0,    0,    0,    0,
-                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0],
-                              [101, 2682, 4692,  872, 4638, 5401, 4212,  102,  779, 2769,  671, 1366,
-                               2218, 5314,  872, 4692,  102, 2769,  779,  697, 1366,  102, 6374, 1328,
-                               782, 2157, 2897, 2207, 2891, 2891, 2948,  872, 5541, 1366,  102]], dtype=torch.int64)
-
-    labels = torch.tensor([[101, 5401, 1957, 5276, 1658,  102, 2458, 1962, 2791, 5023,  872,  749,
-                            102, 2769, 3341, 1568,  102, -100, -100, -100, -100, -100, -100, -100,
-                            -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100],
-                           [101, 2682, 4692,  872, 4638, 5401, 4212,  102,  779, 2769,  671, 1366,
-                            2218, 5314,  872, 4692,  102, 2769,  779,  697, 1366,  102, 6374, 1328,
-                            782, 2157, 2897, 2207, 2891, 2891, 2948,  872, 5541, 1366,  102]], dtype=torch.int64)
-    
-    return input_ids, labels
 
 
 def debug_gpt2_lmhead_model():
@@ -45,21 +28,55 @@ def debug_gpt2_model():
 def debug_gpt2_block():
     block = GPT2Block(config=model_config, layer_idx=0)
     print("block = ", block, sep='\n', end='\n\n')
-    batch_size = 2
-    seq_len = 35
-    n_embd = model_config.n_embd
-    hidden_states = torch.randn(size=(batch_size, seq_len, n_embd))
+    hidden_states = mock_hidden_states(model_config)
     output = block.forward(hidden_states=hidden_states)
     print("output = ", output, sep='\n', end='\n\n')
-    ...
 
 
 def debug_gpt2_attention():
     attn = GPT2Attention(config=model_config)
-    
+    print("attn = ", attn, sep='\n', end='\n\n')
+    hidden_states = mock_hidden_states(model_config)
+    output = attn.forward(hidden_states=hidden_states)
+    print("output = ", output, sep='\n', end='\n\n')
     ...
+
+
+def debug_gpt2_mlp():
+    mlp = GPT2MLP(intermediate_size=4 * model_config.hidden_size, config=model_config)
+    print("mlp = ", mlp, sep='\n', end='\n\n')
+    hidden_states = mock_hidden_states(model_config)
+    output = mlp.forward(hidden_states=hidden_states)
+    print("output = ", output, sep='\n', end='\n\n')
+
+
+def debug_conv1d():
+    embed_dim = model_config.n_embd
+    conv1d = Conv1D(3 * embed_dim, embed_dim)
+    print("conv1d = ", conv1d, sep='\n', end='\n\n')
+    hidden_states = mock_hidden_states(model_config)
+    output = conv1d.forward(hidden_states)
+    print("output = ", output, sep='\n', end='\n\n')
+    ...
+
+
+def debug_new_gelue_activation():
+    """
+    Implementation of the GELU activation function currently in Google BERT repo (identical to OpenAI GPT). Also see
+    the Gaussian Error Linear Units paper: https://arxiv.org/abs/1606.08415
+    """
+    act = NewGELUActivation()
+    hidden_states = mock_hidden_states(model_config)
+    output = act.forward(input=hidden_states)
+    print("output = ", output, sep='\n', end='\n\n')
+    ...
+
 
 if __name__ == "__main__":
     # debug_gpt2_lmhead_model()
     # debug_gpt2_model()
-    debug_gpt2_block()
+    # debug_gpt2_block()
+    # debug_gpt2_attention()
+    # debug_gpt2_mlp()
+    # debug_conv1d()
+    debug_new_gelue_activation()
