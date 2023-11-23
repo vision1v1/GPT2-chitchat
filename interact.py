@@ -115,16 +115,16 @@ def main():
             history.append(text_ids)
             input_ids = [tokenizer.cls_token_id]  # 每个input以[CLS]为开头
 
-            for history_id, history_utr in enumerate(history[-args.max_history_len:]):
-                input_ids.extend(history_utr)
-                input_ids.append(tokenizer.sep_token_id)
+            for history_id, history_utr in enumerate(history[-args.max_history_len:]):# 获取时间上最近的历史
+                input_ids.extend(history_utr) # 把最近的user问话，拼接进去。
+                input_ids.append(tokenizer.sep_token_id) # 添加分割[SEP]
             input_ids = torch.tensor(input_ids).long().to(device)
             input_ids = input_ids.unsqueeze(0)
             response = []  # 根据context，生成的response
             # 最多生成max_len个token
             for _ in range(args.max_len):
                 outputs = model(input_ids=input_ids)
-                logits = outputs.logits
+                logits = outputs.logits # 没有进行softmax输出的结果。
                 next_token_logits = logits[0, -1, :]
                 # 对于已生成的结果generated中的每个token添加一个重复惩罚项，降低其生成概率
                 for id in set(response):
