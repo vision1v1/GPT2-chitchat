@@ -15,6 +15,7 @@ def debug_gpt2_lmhead_model():
     input_ids, labels = mock_inputs()
     output = model.forward(input_ids=input_ids, labels=labels)
     print("output = ", output, sep='\n', end='\n\n')
+    print("logists = ", output.logits, sep='\n', end='\n\n')
 
 
 def debug_gpt2_model():
@@ -73,10 +74,10 @@ def debug_new_gelue_activation():
 
 
 if __name__ == "__main__":
-    # debug_gpt2_lmhead_model()
+    debug_gpt2_lmhead_model()
     # debug_gpt2_model()
     # debug_gpt2_block()
     # debug_gpt2_attention()
     # debug_gpt2_mlp()
     # debug_conv1d()
-    debug_new_gelue_activation()
+    # debug_new_gelue_activation()
