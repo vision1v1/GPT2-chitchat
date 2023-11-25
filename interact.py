@@ -35,9 +35,8 @@ def set_args():
     parser.add_argument('--device', default='0', type=str, required=False, help='生成设备')
     parser.add_argument('--temperature', default=1, type=float, required=False, help='生成的temperature')
     parser.add_argument('--topk', default=8, type=int, required=False, help='最高k选1')
-    parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
-    # parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
-    #                     help='模型参数')
+    parser.add_argument('--topp', default=0.8, type=float, required=False, help='最高积累概率')
+    # parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False, help='模型参数')
     parser.add_argument('--log_path', default='data/interact.log', type=str, required=False, help='interact日志存放位置')
     parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--model_path', default='model/epoch40', type=str, required=False, help='对话模型路径')
@@ -65,7 +64,7 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
         # Remove all tokens with a probability less than the last token of the top-k
         # torch.topk()返回最后一维最大的top_k个元素，返回值为二维(values,indices)
         # ...表示其他维度由计算机自行推断
-        indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
+        indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None] # 用top_k中最小的卡出需要移除的
         logits[indices_to_remove] = filter_value  # 对于topk之外的其他元素的logits值设为负无穷
 
     if top_p > 0.0:
@@ -76,7 +75,7 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
         sorted_indices_to_remove = cumulative_probs > top_p
         # Shift the indices to the right to keep also the first token above the threshold
         sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-        sorted_indices_to_remove[..., 0] = 0
+        sorted_indices_to_remove[..., 0] = 0 # 有时top_p 把所有的都token都过滤掉了，所以这里强行保留第一个。
 
         indices_to_remove = sorted_indices[sorted_indices_to_remove]
         logits[indices_to_remove] = filter_value
@@ -123,7 +122,7 @@ def main():
             response = []  # 根据context，生成的response
             # 最多生成max_len个token
             for _ in range(args.max_len):
-                outputs = model(input_ids=input_ids)
+                outputs = model.forward(input_ids=input_ids)
                 logits = outputs.logits # 没有进行softmax输出的结果。
                 next_token_logits = logits[0, -1, :]
                 # 对于已生成的结果generated中的每个token添加一个重复惩罚项，降低其生成概率
@@ -134,7 +133,7 @@ def main():
                 next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')
                 filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=args.topk, top_p=args.topp)
                 # torch.multinomial表示从候选集合中无放回地进行抽取num_samples个元素，权重越高，抽到的几率越高，返回元素的下标
-                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1) # 避免重复出现，无放回采样
                 if next_token == tokenizer.sep_token_id:  # 遇到[SEP]则表明response生成结束
                     break
                 response.append(next_token.item())
