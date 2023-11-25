@@ -1,10 +1,12 @@
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2Model
 from transformers.models.gpt2.modeling_gpt2 import GPT2Block, GPT2Attention, GPT2MLP, Conv1D
+from transformers.modeling_outputs import BaseModelOutputWithCrossAttentions
 from transformers.activations import NewGELUActivation
 from mock_data import mock_inputs, mock_hidden_states
 
-model_config_path = '../config/config.json'
+# model_config_path = '../config/config.json'
+model_config_path = '../config/debug_config.json'
 model_config = GPT2Config.from_json_file(model_config_path)
 print("config =", model_config, sep='\n', end='\n\n')
 
@@ -22,8 +24,16 @@ def debug_gpt2_model():
     model = GPT2Model(config=model_config)
     print("model = ", model, sep='\n', end='\n\n')
     input_ids, labels = mock_inputs()
-    output = model.forward(input_ids=input_ids, return_dict=True)
-    print("output = ", output, sep='\n', end='\n\n')
+    output:BaseModelOutputWithCrossAttentions = model.forward(input_ids=input_ids, return_dict=True)
+    last_hidden_state = output.last_hidden_state # 最后一个block的输出
+    hidden_states = output.hidden_states # 所有block的输出，需要设置参数，才输出，默认不输出
+    attentions = output.attentions # 所有自注意的attention，需要设置参数，才输出，默认不输出
+    cross_attentions = output.cross_attentions # 所有的cross_attention, 需要设置参数，才输出，默认不输出
+    print("output.last_hidden_state = ", last_hidden_state, sep='\n', end='\n\n') 
+    print("output.hidden_states = ", hidden_states, sep='\n', end='\n\n')
+    print("output.attentions = ", attentions, sep='\n', end='\n\n')
+    print("output.cross_attentions = ", cross_attentions, sep='\n', end='\n\n')
+
 
 
 def debug_gpt2_block():
@@ -74,8 +84,8 @@ def debug_new_gelue_activation():
 
 
 if __name__ == "__main__":
-    debug_gpt2_lmhead_model()
-    # debug_gpt2_model()
+    # debug_gpt2_lmhead_model()
+    debug_gpt2_model()
     # debug_gpt2_block()
     # debug_gpt2_attention()
     # debug_gpt2_mlp()
