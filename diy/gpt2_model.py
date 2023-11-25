@@ -1,23 +1,29 @@
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2Model
 from transformers.models.gpt2.modeling_gpt2 import GPT2Block, GPT2Attention, GPT2MLP, Conv1D
-from transformers.modeling_outputs import BaseModelOutputWithCrossAttentions
+from transformers.modeling_outputs import BaseModelOutputWithCrossAttentions, CausalLMOutputWithCrossAttentions
 from transformers.activations import NewGELUActivation
 from mock_data import mock_inputs, mock_hidden_states
 
 # model_config_path = '../config/config.json'
 model_config_path = '../config/debug_config.json'
 model_config = GPT2Config.from_json_file(model_config_path)
-print("config =", model_config, sep='\n', end='\n\n')
+# print("config =", model_config, sep='\n', end='\n\n')
 
 
 def debug_gpt2_lmhead_model():
     model = GPT2LMHeadModel(config=model_config)
     print("model = ", model, sep='\n', end='\n\n')
     input_ids, labels = mock_inputs()
-    output = model.forward(input_ids=input_ids, labels=labels)
-    print("output = ", output, sep='\n', end='\n\n')
-    print("logists = ", output.logits, sep='\n', end='\n\n')
+    output:CausalLMOutputWithCrossAttentions = model.forward(input_ids=input_ids, labels=labels)
+    loss = output.loss # input_ids 与 labels 之间的损失。
+    logists = output.logits # softmax 之前的预测
+    output.attentions # 所有block的 self attention
+    output.cross_attentions # 所有block的 cross_attention
+    output.past_key_values # 
+
+    print("output.loss = ", loss, sep='\n', end='\n\n')
+    print("output.logits = ", logists, sep='\n', end='\n\n')
 
 
 def debug_gpt2_model():
@@ -84,8 +90,8 @@ def debug_new_gelue_activation():
 
 
 if __name__ == "__main__":
-    # debug_gpt2_lmhead_model()
-    debug_gpt2_model()
+    debug_gpt2_lmhead_model()
+    # debug_gpt2_model()
     # debug_gpt2_block()
     # debug_gpt2_attention()
     # debug_gpt2_mlp()
