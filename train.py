@@ -25,6 +25,7 @@ import torch.nn.utils.rnn as rnn_utils
 import numpy as np
 from dataset import MyDataset
 from util import create_logger
+import json
 
 
 def set_args():
@@ -402,7 +403,7 @@ def main():
     logger.info('number of model parameters: {}'.format(num_parameters))
 
     # 记录参数设置
-    logger.info("args:{}".format(args))
+    logger.info("args:\n{}".format(json.dumps(args.__dict__, indent=2)))
 
     # 加载训练集和验证集
     # ========= Loading Dataset ========= #
