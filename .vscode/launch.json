@@ -14,7 +14,7 @@
             "request": "launch",
             "program": "${workspaceFolder}\\train.py",
             "cwd": "${workspaceFolder}\\",
-            "justMyCode": false
+            "justMyCode": true
         },
         {
             "name": "interact.py",

@@ -3,5 +3,8 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8",
         "editor.formatOnSave": false
+    },
+    "workbench.editorAssociations": {
+        "*.md":"vscode.markdown.preview.editor" // markdown 文档默认预览打开
     }
 }
