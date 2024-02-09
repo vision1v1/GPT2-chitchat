@@ -96,7 +96,7 @@ def load_dataset(logger, args):
     logger.info("loading training dataset and validating dataset")
     train_path = args.train_path
 
-    with open(train_path, "rb") as f:
+    with open(train_path, "rb") as f: # //
         input_list = pickle.load(f)
 
     # 划分训练集与验证集

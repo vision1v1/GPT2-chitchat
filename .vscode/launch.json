@@ -6,7 +6,7 @@
             "request": "launch",
             "program": "${workspaceFolder}\\preprocess.py",
             "cwd": "${workspaceFolder}\\",
-            "justMyCode": false
+            "justMyCode": true
         },
         {
             "name": "train.py",
