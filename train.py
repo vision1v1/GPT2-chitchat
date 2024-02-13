@@ -162,11 +162,8 @@ def train_epoch(model, train_dataloader, optimizer, scheduler, logger, epoch, ar
                 optimizer.zero_grad()
 
             if (batch_idx + 1) % args.log_step == 0:
-                logger.info("batch {} of epoch {}, loss {}, batch_acc {}, lr {}".format(batch_idx + 1,
-                                                                                        epoch + 1,
-                                                                                        loss.item() * args.gradient_accumulation_steps,
-                                                                                        batch_acc,
-                                                                                        scheduler.get_lr()))
+                logger.info(f"batch {batch_idx + 1} of epoch {epoch + 1}, loss {loss.item() * args.gradient_accumulation_steps:.5f}, "
+                            f"batch_acc {batch_acc}, lr {scheduler.get_lr()}")
 
             del input_ids, outputs
 
@@ -182,18 +179,18 @@ def train_epoch(model, train_dataloader, optimizer, scheduler, logger, epoch, ar
     # 记录当前epoch的平均loss与accuracy
     epoch_mean_loss = total_loss / len(train_dataloader)
     epoch_mean_acc = epoch_correct_num / epoch_total_num
-    logger.info("epoch {}: loss {}, predict_acc {}".format(epoch + 1, epoch_mean_loss, epoch_mean_acc))
+    logger.info(f"epoch {epoch + 1}: loss {epoch_mean_loss:.5f}, predict_acc {epoch_mean_acc}")
 
     # save model
-    logger.info('saving model for epoch {}'.format(epoch + 1))
-    model_path = join(args.save_model_path, 'epoch{}'.format(epoch + 1))
+    logger.info(f'saving model for epoch {epoch + 1}')
+    model_path = join(args.save_model_path, f'epoch{epoch + 1}')
     if not os.path.exists(model_path):
         os.mkdir(model_path)
     model_to_save = model.module if hasattr(model, 'module') else model
     model_to_save.save_pretrained(model_path)
-    logger.info('epoch {} finished'.format(epoch + 1))
+    logger.info(f'epoch {epoch + 1} finished')
     epoch_finish_time = datetime.now()
-    logger.info('time for one epoch: {}'.format(epoch_finish_time - epoch_start_time))
+    logger.info(f'time for one epoch: {epoch_finish_time - epoch_start_time}')
 
     return epoch_mean_loss
 
@@ -293,7 +290,7 @@ def train(model, logger, train_dataset, validate_dataset, args):
         # 保存当前困惑度最低的模型，困惑度低，模型的生成效果不一定会越好
         if validate_loss < best_val_loss:
             best_val_loss = validate_loss
-            logger.info('saving current best model for epoch {}'.format(epoch + 1))
+            logger.info(f'saving current best model for epoch {epoch + 1}')
             model_path = join(args.save_model_path, 'min_ppl_model'.format(epoch + 1))
             if not os.path.exists(model_path):
                 os.mkdir(model_path)
