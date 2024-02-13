@@ -53,14 +53,14 @@ def set_args():
     parser.add_argument('--pretrained_model', default='', type=str, required=False, help='预训练的模型的路径')
     # parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
     parser.add_argument('--num_workers', type=int, default=0, help="dataloader加载数据时使用的线程数量")
-    parser.add_argument('--patience', type=int, default=0, help="用于early stopping,设为0时,不进行early stopping.early stop得到的模型的生成效果不一定会更好。")
+    parser.add_argument('--patience', type=int, default=0,
+                        help="用于early stopping,设为0时,不进行early stopping.early stop得到的模型的生成效果不一定会更好。")
     parser.add_argument('--warmup_steps', type=int, default=4000, help='warm up步数')
     # parser.add_argument('--label_smoothing', default=True, action='store_true', help='是否进行标签平滑')
     # parser.add_argument('--val_num', type=int, default=8000, help='验证集大小')
     parser.add_argument('--val_num', type=int, default=1, help='验证集大小')  # 调试用的
     args = parser.parse_args()
     return args
-
 
 
 def collate_fn(batch):
@@ -96,7 +96,7 @@ def load_dataset(logger, args):
     logger.info("loading training dataset and validating dataset")
     train_path = args.train_path
 
-    with open(train_path, "rb") as f: # //
+    with open(train_path, "rb") as f:  # //
         input_list = pickle.load(f)
 
     # 划分训练集与验证集
@@ -223,9 +223,9 @@ def validate_epoch(model, validate_dataloader, logger, epoch, args):
 
             # 记录当前epoch的平均loss
             epoch_mean_loss = total_loss / len(validate_dataloader)
-            logger.info("validate epoch {}: loss {}".format(epoch+1, epoch_mean_loss))
+            logger.info(f"validate epoch {epoch+1}: loss {epoch_mean_loss:.5f}")
             epoch_finish_time = datetime.now()
-            logger.info('time for validating one epoch: {}'.format(epoch_finish_time - epoch_start_time))
+            logger.info(f'time for validating one epoch: {epoch_finish_time - epoch_start_time}')
             return epoch_mean_loss
     except RuntimeError as exception:
         if "out of memory" in str(exception):
@@ -257,7 +257,8 @@ def train(model, logger, train_dataset, validate_dataset, args):
     early_stopping = EarlyStopping(args.patience, verbose=True, save_path=args.save_model_path)
     # 总的更新次数。
     t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
-    optimizer = transformers.AdamW(model.parameters(), lr=args.lr, eps=args.eps)
+    # optimizer = transformers.AdamW(model.parameters(), lr=args.lr, eps=args.eps)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, eps=args.eps)
     # scheduler = transformers.WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
     scheduler = transformers.get_linear_schedule_with_warmup(optimizer,
                                                              num_warmup_steps=args.warmup_steps,
@@ -307,8 +308,8 @@ def train(model, logger, train_dataset, validate_dataset, args):
             logger.info("Early stopping")
             break
     logger.info('training finished')
-    logger.info("train_losses:{}".format(train_losses))
-    logger.info("validate_losses:{}".format(validate_losses))
+    logger.info(f"train_losses:{train_losses:.5f}")
+    logger.info(f"validate_losses:{validate_losses:.5f}")
 
 
 def caculate_loss(logit, target, pad_idx, smoothing=True):
@@ -350,30 +351,33 @@ def main():
     # 初始化参数
     args = set_args()
 
-    # 设置使用哪些显卡进行训练
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.device
+    # 创建日志对象
+    logger = create_logger(args.log_path)
 
-    args.cuda = not args.no_cuda
+    # 设置训练环境
+    if not args.no_cuda and torch.cuda.is_available():
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.device # 设置使用哪些显卡进行训练
+        device = f'cuda:{args.device}'
+        args.cuda = True # TODO args.cuda 与 args.no_cuda 重复了
+    else:
+        device = 'cpu'
+        args.cuda = False
+    
+    logger.info(f'using device:{device}')
+    # args.cuda = not args.no_cuda
+    # args.cuda = torch.cuda.is_available() and not args.no_cuda # 当用户使用GPU,并且GPU可用时
+    # device = 'cuda:0' if args.cuda else 'cpu'
+    # args.device = device
 
     if args.batch_size < 2048 and args.warmup_steps <= 4000:
-        print('[Warning] The warmup steps may be not enough.\n'
-              '(sz_b, warmup) = (2048, 4000) is the official setting.\n'
-              'Using smaller batch w/o longer warmup may cause '
-              'the warmup stage ends with only little data trained.')
-
-    # 创建日志对象
-    logger = create_logger(args)
-    # 当用户使用GPU,并且GPU可用时
-    args.cuda = torch.cuda.is_available() and not args.no_cuda
-    device = 'cuda:0' if args.cuda else 'cpu'
-    args.device = device
-    logger.info('using device:{}'.format(device))
+        logger.warning('The warmup steps may be not enough. (sz_b, warmup) = (2048, 4000) is the official setting.\n'
+                       'Using smaller batch w/o longer warmup may cause the warmup stage ends with only little data trained.')
 
     # 初始化tokenizer
     tokenizer = BertTokenizerFast(vocab_file=args.vocab_path, sep_token="[SEP]", pad_token="[PAD]", cls_token="[CLS]")
-    args.sep_id = tokenizer.sep_token_id
-    args.pad_id = tokenizer.pad_token_id
-    args.cls_id = tokenizer.cls_token_id
+    args.sep_id = tokenizer.sep_token_id # 102
+    args.pad_id = tokenizer.pad_token_id # 0
+    args.cls_id = tokenizer.cls_token_id # 101
 
     # 创建模型的输出目录
     if not os.path.exists(args.save_model_path):
@@ -386,24 +390,24 @@ def main():
         model_config = GPT2Config.from_json_file(args.model_config)
         model = GPT2LMHeadModel(config=model_config)
     model = model.to(device)
-    logger.info('model config:\n{}'.format(model.config.to_json_string()))
+    logger.info(f'model config:\n{model.config.to_json_string()}')
     assert model.config.vocab_size == tokenizer.vocab_size
 
     # 并行训练模型
     if args.cuda and torch.cuda.device_count() > 1:
         model = DataParallel(model).cuda()
         # model = BalancedDataParallel(args.gpu0_bsz, model, dim=0).cuda()
-        logger.info("use GPU {} to train".format(args.device))
+        logger.info(f"use GPU {args.device} to train")
 
     # 计算模型参数数量
     num_parameters = 0
     parameters = model.parameters()
     for parameter in parameters:
         num_parameters += parameter.numel()
-    logger.info('number of model parameters: {}'.format(num_parameters))
+    logger.info(f'number of model parameters: {num_parameters}')
 
     # 记录参数设置
-    logger.info("args:\n{}".format(json.dumps(args.__dict__, indent=2)))
+    logger.info(f"args:\n{json.dumps(args.__dict__, indent=2)}")
 
     # 加载训练集和验证集
     # ========= Loading Dataset ========= #
