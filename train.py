@@ -357,13 +357,13 @@ def main():
     # 设置训练环境
     if not args.no_cuda and torch.cuda.is_available():
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device # 设置使用哪些显卡进行训练
-        device = f'cuda:{args.device}'
+        args.device = f'cuda:{args.device}' # TODO 多gpu时？
         args.cuda = True # TODO args.cuda 与 args.no_cuda 重复了
     else:
-        device = 'cpu'
+        args.device = 'cpu'
         args.cuda = False
     
-    logger.info(f'using device:{device}')
+    logger.info(f'using device:{args.device}')
     # args.cuda = not args.no_cuda
     # args.cuda = torch.cuda.is_available() and not args.no_cuda # 当用户使用GPU,并且GPU可用时
     # device = 'cuda:0' if args.cuda else 'cpu'
@@ -389,7 +389,7 @@ def main():
     else:  # 初始化模型
         model_config = GPT2Config.from_json_file(args.model_config)
         model = GPT2LMHeadModel(config=model_config)
-    model = model.to(device)
+    model = model.to(args.device)
     logger.info(f'model config:\n{model.config.to_json_string()}')
     assert model.config.vocab_size == tokenizer.vocab_size
 
