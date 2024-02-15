@@ -84,7 +84,7 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
 
 def main():
     args = set_args()
-    logger = create_logger(args)
+    logger = create_logger(args.log_path)
     # 当用户使用GPU,并且GPU可用时
     args.cuda = torch.cuda.is_available() and not args.no_cuda
     device = 'cuda' if args.cuda else 'cpu'
@@ -133,7 +133,7 @@ def main():
                 next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')
                 filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=args.topk, top_p=args.topp)
                 # torch.multinomial表示从候选集合中无放回地进行抽取num_samples个元素，权重越高，抽到的几率越高，返回元素的下标
-                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1) # 避免重复出现，无放回采样
+                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1) # 避免重复出现，按概率 无放回采样
                 if next_token == tokenizer.sep_token_id:  # 遇到[SEP]则表明response生成结束
                     break
                 response.append(next_token.item())
