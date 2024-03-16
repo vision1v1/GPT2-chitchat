@@ -1,2 +1,2 @@
 [tool.autopep8]
-max_line_length = 150
+max_line_length = 500
