@@ -53,8 +53,7 @@ def set_args():
     parser.add_argument('--pretrained_model', default='', type=str, required=False, help='预训练的模型的路径')
     # parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
     parser.add_argument('--num_workers', type=int, default=0, help="dataloader加载数据时使用的线程数量")
-    parser.add_argument('--patience', type=int, default=0,
-                        help="用于early stopping,设为0时,不进行early stopping.early stop得到的模型的生成效果不一定会更好。")
+    parser.add_argument('--patience', type=int, default=0, help="早停，patience步数，如果没有提升就停掉训练，默认为0，不早停")
     parser.add_argument('--warmup_steps', type=int, default=4000, help='warm up步数')
     # parser.add_argument('--label_smoothing', default=True, action='store_true', help='是否进行标签平滑')
     # parser.add_argument('--val_num', type=int, default=8000, help='验证集大小')
