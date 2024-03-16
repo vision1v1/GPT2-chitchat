@@ -42,7 +42,7 @@ def preprocess():
     # 保存所有的对话数据,每条数据的格式为："[CLS]utterance1[SEP]utterance2[SEP]utterance3[SEP]"
     dialogue_len = []  # 记录所有对话tokenize之后的长度，用于统计中位数与均值
     dialogue_list = []
-    for index, dialogue in enumerate(tqdm(train_data)):
+    for index, dialogue in enumerate(tqdm(train_data, total=len(train_data), ascii=' >>', colour='green', dynamic_ncols=True)):
         if "\r\n" in data:
             utterances = dialogue.split("\r\n")
         else:
@@ -55,9 +55,9 @@ def preprocess():
         dialogue_len.append(len(input_ids))
         dialogue_list.append(input_ids)
 
-    len_mean = np.mean(dialogue_len)  # 统计长度均值
-    len_median = np.median(dialogue_len)  # 统计长度中位数
-    len_max = np.max(dialogue_len)  # 统计长度最大值
+    len_mean = np.mean(dialogue_len)  # 统计平均长度
+    len_median = np.median(dialogue_len)  # 统计长度的中位数
+    len_max = np.max(dialogue_len)  # 统计长度的最大值
     logger.info(f"mean of dialogue len:{len_mean:.3f},median of dialogue len:{len_median},max len:{len_max}")
 
     # 保存处理好的结果
