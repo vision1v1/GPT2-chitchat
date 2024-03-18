@@ -52,7 +52,7 @@ def preprocess():
         for utterance in utterances:
             input_ids += tokenizer.encode(utterance, add_special_tokens=False)
             input_ids.append(sep_id)  # 每个utterance之后添加[SEP]，表示utterance结束
-        dialogue_len.append(len(input_ids))
+        dialogue_len.append(len(input_ids)) # 收集长度用于后面统计
         dialogue_list.append(input_ids)
 
     len_mean = np.mean(dialogue_len)  # 统计平均长度
